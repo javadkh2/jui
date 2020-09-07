@@ -1,3 +1,4 @@
 import { MyComponent } from "./MyComponent";
+import { range, interval } from "rxjs";
 
-MyComponent({ title: "test" });
+document.body.appendChild(MyComponent({ title: "test",  $text: interval(1000) }));

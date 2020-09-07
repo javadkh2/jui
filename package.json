@@ -5,6 +5,7 @@
   "main": "MyComponent.js",
   "scripts": {
     "build": "webpack",
+    "start": "webpack --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -19,5 +20,7 @@
     "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
   },
-  "dependencies": {}
+  "dependencies": {
+    "rxjs": "^6.6.3"
+  }
 }
