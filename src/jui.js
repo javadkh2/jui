@@ -17,17 +17,18 @@ function getElement(elm) {
 
 function append(elm, children) {
   children.forEach((child) => {
-    if (isObservable(child)) {
+    if (Array.isArray(child)) {
+      append(elm, child);
+    } else if (isObservable(child)) {
       let placeHolder = document.createTextNode("");
       elm.appendChild(placeHolder);
       child.subscribe((result) => {
-        if(isObservable(result)){
+        if (isObservable(result)) {
           throw new Error("more level of observable is not supported");
         }
         const childElement = getElement(result);
         elm.replaceChild(childElement, placeHolder);
         placeHolder = childElement;
-        console.log(childElement);
       });
     } else {
       elm.appendChild(getElement(child));
@@ -36,7 +37,6 @@ function append(elm, children) {
 }
 
 function isEvent([key]) {
-  console.log("key", key);
   return key.startsWith("on");
 }
 
@@ -50,6 +50,10 @@ function getEventName(key) {
 
 export function element(type, properties, ...children) {
   const props = properties ? properties : {};
+
+  if (typeof type === "function") {
+    return type({ ...properties, children });
+  }
 
   const element = document.createElement(type);
 
@@ -70,8 +74,6 @@ export function element(type, properties, ...children) {
   if (children && children.length) {
     append(element, children);
   }
-
-  console.log(type, properties, ...children);
 
   return element;
 }
