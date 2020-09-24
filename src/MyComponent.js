@@ -1,6 +1,8 @@
 import * as jui from "./jui";
-import { map, filter, delay, throttleTime } from "rxjs/operators";
+import { map, filter, delay, throttleTime, startWith } from "rxjs/operators";
 import { Subject, interval, combineLatest } from "rxjs";
+import { Subscribe } from "./Components/Subscribe";
+import { $reflector } from "./utils";
 
 function isOdd(num) {
   return num % 2 === 1;
@@ -13,9 +15,13 @@ const add = (...$args) =>
     result.reduce((acc, a) => acc + a, 0)
   );
 
+function subscribe(observables = [], children) {
+  return combineLatest(observables).pipe(map((items) => children(...items)));
+}
+
 function TestComponent({ text, children }) {
-  const $a = new Subject();
-  const $b = new Subject();
+  const [$a, nextA] = $reflector(0);
+  const [$b, nextB] = $reflector(0);
   return (
     <div>
       {text}-{children}
@@ -23,18 +29,26 @@ function TestComponent({ text, children }) {
         <input
           type="number"
           oninput={(e) => {
-            $a.next(+e.target.value);
+            nextA(+e.target.value);
           }}
         />
         <input
           type="number"
           oninput={(e) => {
-            $b.next(+e.target.value);
+            nextB(+e.target.value);
           }}
         />
       </div>
       a: {$a} - b:{$b}
+      <br />
       <div>{add($a, $b)}</div>
+      <Subscribe observables={[$a, $b]}>
+        {(a, b) => {
+          if (!a && !b) return interval(1000).pipe(startWith("Zero counter!"));
+          if (!a || !b) return <div>NO DATA {interval(1000)}</div>;
+          return a + b;
+        }}
+      </Subscribe>
     </div>
   );
 }
@@ -50,20 +64,22 @@ export function MyComponent({ title, $text }) {
   return (
     <div className="test">
       <h1>{title}</h1>
-      <TestComponent text="hello world">lala {$text}</TestComponent>
+      <TestComponent text="hello world">lala</TestComponent>
       <section>
         <div id={$text}>
           <h3>Its a timer</h3>
           Timer: {$text}
         </div>
       </section>
-      {get($num, (num) =>
-        isOdd(num) ? (
-          <div>the number is odd: {num}</div>
-        ) : (
-          <div>the number is even: {$text}</div>
-        )
-      )}
+      <Subscribe observables={[$num]}>
+        {(num) =>
+          isOdd(num) ? (
+            <div>the number is odd: {num}</div>
+          ) : (
+            <div>the number is even: {$text}</div>
+          )
+        }
+      </Subscribe>
       <button onclick={onclick}>Click Me</button>
     </div>
   );
